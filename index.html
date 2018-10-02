@@ -304,7 +304,7 @@
      var pngData = svg._groups[0][0].outerHTML;
      var source = (new XMLSerializer()).serializeToString(d3.select('svg').node());
      var pngBlob = new Blob([pngData+ source], {type:"image/svg+xml;charset=utf-8"}); 
-     var pngUrl = window.URL.createObjectURL(pgBlob);
+     var pngUrl = window.URL.createObjectURL(pngBlob);
 
      savePng.onload=function(){
 	     var canvas = d3.select('body').append('canvas').node();
