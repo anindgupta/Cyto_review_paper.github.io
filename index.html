@@ -296,4 +296,29 @@
          downloadLink.click();
          document.body.removeChild(downloadLink); 
      }
+     var savePng = d3.select('body').append('savePng')
+	 .attr('width', 1200)
+	 .attr('height', 900)
+	 .node();
+    
+     var pngData = svg._groups[0][0].outerHTML;
+     var source = (new XMLSerializer()).serializeToString(d3.select('svg').node());
+     var pngBlob = new Blob([pngData+ source], {type:"image/svg+xml;charset=utf-8"}); 
+     var pngUrl = window.URL.createObjectURL(blob);
+
+     savePng.onload=function(){
+	     var canvas = d3.select('body').append('canvas').node();
+	     canvas.width = 1200;
+  	     canvas.height = 900;
+	     var ctx = canvas.getContext('2d');
+             ctx.drawImage(savePng, 0, 0);
+	     var canvasUrl = canvas.toDataURL("image/png");
+  	     var img2 = d3.select('body').append('savePng')
+	        .attr('width', 1200)
+    		.attr('height', 900)
+   		.node();
+  img2.src = canvasUrl; 
+}
+// start loading the image.
+savePng.src = pngUrl;
 </script>
