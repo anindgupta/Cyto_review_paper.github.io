@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cytometry Vis </title>
+    <!-- Required meta tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">-->
+</head>
+
+<style>
+    th {color: white; padding:10px;}
+    div.tooltip {
+       color:white;
+       position: absolute;
+       text-align: left;
+       width: 600px;
+       min-height: 35px;
+       padding: 5px 10px 5px 10px;
+       font: bold 14px sans-serif;
+       background: steelblue;
+       border: 0px;
+       border-radius: 8px;
+       pointer-events: none;
+     }
+
+</style>
+
+<body>
+    <svg width="1200" height="900" font-family="sans-serif" font-size="10" text-anchor="middle"></svg>
+
+    <table>
+       <tr>
+         <th id="flc0"></th>
+         <th id="flc1"></th>
+         <th id="flc2"></th>
+         <th id="flc3"></th>
+         <th style=" color:black" > Big boxes </th>
+       </tr>
+       <tr>
+         <th id="slc0"></th>
+         <th id="slc1"></th>
+         <th id="slc2"></th>
+         <th id="slc3"></th>
+         <th style=" color:black"> type of microscopy (rows in big boxes) </th>
+       </tr>
+       <tr>
+         <th id="tlc0"></th>
+         <th id="tlc1"></th>
+         <th id="tlc2"></th>
+         <th id="tlc3"></th>
+         <th style=" color:black">  Location  </th>
+       </tr>
+     </table>
+
+</body> 
+
+<script>
+    var svg = d3.select("svg"),
+    width = svg.attr("width"),
+    height = svg.attr("height"),
+    columns=3,
+    lines=1,
+    //piecew=width/columns,
+    pieceh=height/lines,
+    itemsize=32,
+    strokewidth=2,
+    padding=20,
+    heightofbox=0.95*pieceh,
+    hasTooltips=true;
+    const reducer = (accumulator, currentValue) => accumulator + currentValue;
+    var flwidths=[0.2,0.5,0.3];
+    var piecew=[];
+    var xZeros=[];
+    flwidths.forEach(function(w){ piecew.push(w*width)});
+    piecew.forEach(function(w,i){ xZeros.push(piecew.slice(0,i).reduce(reducer,0))});
+    var flheights=[0.35,0.26,0.26];
+    var pieceh=[];
+    var yZeros=[];
+    flheights.forEach(function(h){ pieceh.push(h*heightofbox)});
+    pieceh.forEach(function(h,i){ yZeros.push(pieceh.slice(0,i).reduce(reducer,0))});
+
+    var tt = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+    //First level categories (Mod
+    var labelflc=[ "Image Processing", "Classification", "Segmentation", "Others"];
+    var flc=["P","C","S"];//,"O" ];
+    //second level categories
+    var labelslc=[ "Brightfield", "Electron", "Fluorescence", "Other (4)"];
+    var slc=["BM","EM","FM"];//,"O" ];
+    //third level category
+    var labeltlc=[ "Tissue", "Cellular", "Sub-cellular", "Other" ];
+    var tlc=[ "T", "C", "SB"];//"O"];
+     
+    //Colors for categories from color oracle
+    var colorflc=[ "#0773b3", "#b15a8b" ,"#d36027" ,"#f2e646"];
+    //var colorslc=[ "#cc7aa8" , "#1791da" ,"#00a074" ,"#e79f27"];
+    var colorslc=[ "#33ba95", "#82dec5","#cbf5ea" ,"#d7f7ee"];
+    var colortlc=[ "#cc7aa8" ,"#00a074","#28abf9", "#ffbf54"];
+
+    var flcn=flc.length;
+    var slcn=slc.length;
+    var tlcn=tlc.length;
+
+
+    var tableentries=[];
+    var allobjmap={};
+    for(var i=0;i<flc.length;i++){
+        allobjmap[flc[i]]={};
+    }
+
+    for(var i=0;i<flc.length;i++){
+        for(var j=0;j<slc.length;j++){
+            allobjmap[flc[i]][slc[j]]={};         
+       }
+    }
+
+    for(var i=0;i<flc.length;i++){
+        for(var j=0;j<slc.length;j++){
+            for(var k=0;k<tlc.length;k++){
+                allobjmap[flc[i]][slc[j]][tlc[k]]=[];
+            }
+        }
+    }
+
+    var groups={};
+
+    var bg=svg.append("g")
+       .attr("x", 0)
+       .attr("y", 0)
+       .attr("width", width)
+       .attr("height", height)
+       .attr("fill","transparent")
+       .attr("class","background");
+
+    //this function takes a compound key and creates two entrie
+    var subentries=function(entry){
+        var allthewaydown=false;
+        var isFLC=false, isSLC=false, isTLC=false;
+        var theFLC="",theSLC="",theTLC="";
+        for(var i=0;i<flc.length;i++){
+            if(entry.flc.includes(flc[i])){
+		isFLC=true;
+                theFLC=flc[i];
+            
+                for(var j=0;j<slc.length;j++){
+                    if(entry.slc.includes(slc[j])){
+                       isSLC=true;
+                       theFLC=slc[j];
+                       for(var k=0;k<tlc.length;k++){
+                           if(entry.tlc.includes(tlc[k])){
+                              isTLC=true;
+                              theTLC=tlc[k];
+                           
+                              allobjmap[flc[i]][slc[j]][tlc[k]].push(entry);
+    }   }   }   }   }   }  }
+                      
+    for(var i=0;i < flc.length;i++){
+        //var x0=width*flwidths[i-1]*(i%columns) || 0;
+        var x0=xZeros[i];
+        var y0=yZeros[(Math.floor(i/columns))];
+        console.log(x0,y0);
+        groups[flc[i]]={};
+        //add empty groups for the little items
+        for(var j=0;j < slc.length;j++){
+            groups[flc[i]][slc[j]]=svg.append("g").attr("transform","translate("+(x0+padding)+","+(padding+yZeros[j])+")")
+                     .attr("class",flc[i]+"-"+slc[j]);
+            /*var labely=y0+heightofbox/slcn-padding*2-strokewidth*2;
+            var labelx=0;
+            var label=groups[flc[i]][slc[j]].append("g");
+            label.append("rect").attr("x",labelx).attr("y", labely).attr("fill",colorslc[j])
+                 .attr("width", itemsize/2*labelslc[j].length).attr("height",itemsize);
+            label.append("text").attr("x",labelx+itemsize+labelslc[j].length).attr("y",labely+itemsize/2)
+                 .attr("font-family","sans-serif").attr("font-size",(itemsize/2)+"px").attr("font-weight","bold").attr("fill","white")
+                 .text(labelslc[j]); */
+        }
+    }
+
+
+    var req=d3.tsv("CytoTable.tsv",function(d){ tableentries.push(d); return d;},function(rows){
+	var allentries = d3.nest().key(function(d){ return d["flc"]; })
+				  .key(function(d){ return d["slc"]; })
+				  .key(function(d){ return d["tlc"]; }).entries(rows);
+	rows.forEach(function(d){
+            subentries(d);
+        });        
+ 
+        for(var i=0;i < flc.length;i++){
+            var x0=xZeros[i];
+            //var x0=width*flwidths[i-1]*(i%columns) || 0 ;
+    	    var y0=yZeros[(Math.floor(i/columns))];
+            bg.append("rect")
+               .attr("class",flc[i]).attr("x", x0+strokewidth/columns).attr("y", y0+strokewidth/lines)
+               .attr("width", piecew[i]-strokewidth).attr("height", pieceh.reduce(reducer,0)-strokewidth).attr("fill","#ffffff00")
+               .attr("stroke","#000000").attr("stroke-width",strokewidth);
+//               .attr("stroke",colorflc[i]).attr("stroke-width",strokewidth);
+          
+            var times=1/slcn;
+
+            for(var j=1;j < slc.length;j++){
+ 
+                bg.append("line").attr("x1",x0).attr("y1",yZeros[j]).attr("x2",(x0+width*flwidths[i]-strokewidth)).attr("y2", yZeros[j] )
+                   .attr("stroke-width", strokewidth).attr("stroke","#000000" );
+
+            }
+        }
+
+        for(var i=0;i<flc.length;i++){
+            for(var j=0;j<slc.length;j++){
+                        var count=0,x=0,y=0;
+                for(var k=0;k<tlc.length;k++){
+                    if(allobjmap[flc[i]][slc[j]][tlc[k]].length>0){
+                        //var count=0,x=0,y=0;
+                        allobjmap[flc[i]][slc[j]][tlc[k]].forEach(function(entry){
+                            if(x>piecew[i]-itemsize-padding*2){
+                                x=0;
+                                y+=itemsize+5;
+                            }
+                            var rectg=groups[flc[i]][slc[j]].append("g").attr("transform","translate("+x+","+y+")");
+
+                           	 rectg.append("rect").attr("x",0).attr("y", 0).attr("fill",colortlc[k])
+                                                  .attr("width", itemsize).attr("height",itemsize);
+                                 
+                                 var fontsize=itemsize/2;
+                                 var multiplier=1;
+                                 //change text size according to index length
+                                 if(entry.id.length==2) multiplier=0.9;
+                                 if(entry.id.length>=3) multiplier=0.8;
+
+                                                                  
+                                 
+                           	 rectg.append("text").attr("x",itemsize/2).attr("y",itemsize*(0.625))
+					.attr("font-family","sans-serif").attr("font-size",(fontsize*multiplier)+"px").attr("font-weight","bold")
+                                        .attr("fill","white")
+                                	.text(entry.id);
+                                 if(hasTooltips) {
+                                    rectg.append("rect").attr("x",0).attr("y", 0).attr("fill","rgba(0,0,0,0)")
+                                        .attr("width", itemsize).attr("height",itemsize)
+                                        .on("mouseover", function(d) {
+                                           tt.transition()
+                                             .duration(200)
+                                             .style("opacity", .9);
+                                           tt.html(entry.title)
+                                             .style("left", (d3.event.pageX) + "px")
+                                             .style("top", (d3.event.pageY - 28) + "px");
+                                           })
+                                         .on("mouseout", function(d) {
+                                           tt.transition()
+                                             .duration(500)
+                                             .style("opacity", 0);
+                                           });
+                                  }            
+                            x+=itemsize+5;
+                        });
+                    }
+                }
+            }
+        }
+
+     });
+
+     for(var i=0;i<flc.length;i++){
+        document.getElementById("flc"+i).innerText=labelflc[i]+" ("+flc[i]+")";
+        document.getElementById("flc"+i).style.backgroundColor = colorflc[i];
+     }
+
+     for(var j=0;j<slc.length;j++){
+        document.getElementById("slc"+j).innerText=labelslc[j]+" ("+slc[j]+")";
+        document.getElementById("slc"+j).style.backgroundColor = colorslc[j];
+
+     }
+
+     for(var k=0;k<tlc.length;k++){
+        document.getElementById("tlc"+k).innerText=labeltlc[k]+" ("+tlc[k]+")";
+        document.getElementById("tlc"+k).style.backgroundColor = colortlc[k];
+
+     }
+   
+     infoOfTitle=function(id){
+         tableentries.forEach(function(d){if (d.id==42){console.log(d)}  });
+     }
+     
+     var saveSVG=function(){
+         var svgData = svg._groups[0][0].outerHTML;
+         var svgBlob = new Blob([svgData], {type:"image/svg+xml;charset=utf-8"});
+         var svgUrl = URL.createObjectURL(svgBlob);
+         var downloadLink = document.createElement("a");
+         downloadLink.href = svgUrl;
+         downloadLink.download = "newesttree.svg";
+         document.body.appendChild(downloadLink);
+         downloadLink.click();
+         document.body.removeChild(downloadLink); 
+     }
+</script>
