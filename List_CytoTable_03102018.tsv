@@ -1,4 +1,4 @@
-id	Author	paper	DOI	Task	Mode	Application	Summary
+id	author	title	DOI	flc	slc	tlc	summary
 28	Sadanandan SK et al. (2016)	Feature augmented deep neural networks for segmentation of cells	http://doi.org/10.1007/978-3-319-46604-0_17	S	BF, FL	CL	Improved segmentation using hessian (2nd order derivative) and wavelet filtering of the images with raw inputs to a CNN model.
 35	Su  H et al. (2015)	Robust Cell Detection and Segmentation in Histopathological Images Using Sparse Reconstruction and Stacked Denoising Autoencoders	https://doi.org/10.1007/978-3-319-24574-4_46	S	BF	CLL	Improved brain tumor and lung cancer diagnosis by segmenting and detecting cells using a stacked denoising autoencoder.
 36	Rivenson Y et al. (2017)	Deep learning microscopy: Enhancing resolution, field-of- view and depth-of-field of optical microscopy images using neural networks	http://doi.org/10.1364/CLEO_AT.2018.AM1J.5	P	BF	CLL	Enhanced optical microscopy image resolution, depth of field, and field of view without any imaging system modification using a CNN model.
