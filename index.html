@@ -182,7 +182,7 @@
 
    }
     //Make a xhtmlrequest to bring the TSV with the help of D3
-    var req=d3.tsv("CytoTable.tsv",function(d){ tableentries.push(d); return d;},function(rows){
+    var req=d3.tsv("List_CytoTable_03102018 - Table.tsv",function(d){ tableentries.push(d); return d;},function(rows){
         //Nest entries accodring to categories
 	var allentries = d3.nest().key(function(d){ return d["flc"]; })
 				  .key(function(d){ return d["slc"]; })
