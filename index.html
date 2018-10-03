@@ -142,6 +142,7 @@
 
     //Add the rectangles and lines for the first level categroies (FLC)
     var labeltext=bg.append("g");
+    var fsize=22;
     for(var i=0;i < flcn;i++){
        bg.append("rect")
           .attr("class",flc[i]).attr("x", xZeros[i]+strokewidth).attr("y", yZeros[0]+strokewidth)
@@ -155,19 +156,30 @@
           .attr("class",flc[i]).attr("x", 0+strokewidth).attr("y", yZeros[i]+strokewidth)
           .attr("width", xZeros[0]).attr("height",pieceh[i]-strokewidth).attr("fill","#ffffff00")
           .attr("stroke","#000000").attr("stroke-width",strokewidth);
-       var fsize=22; 
+        
        labeltext.append("text").attr("x",strokewidth+xZeros[i]+piecew[i]/2).attr("y",fsize*1.25)
           .attr("font-family","sans-serif").attr("font-size",fsize).attr("font-weight","bold")
           .attr("fill","black")
           .text(labelflc[i]);
-
-
 
        for(var j=1;j < slc.length;j++){
            bg.append("line").attr("x1",xZeros[i]+strokewidth).attr("y1",yZeros[j])
               .attr("x2",(xZeros[i]+width*flwidths[i]+strokewidth)).attr("y2", yZeros[j] )
               .attr("stroke-width", strokewidth).attr("stroke","#000000" );
        }
+   }
+	
+   //meanings of colors
+   for(var k=0;k<tlcn;k++){
+      var x0=marginfortitles+10*itemsize*k;
+      var y0=yZeros[2]+pieceh[2]+10;
+      bg.append("rect")
+          .attr("class",flc[k]).attr("x",x0).attr("y",y0 )
+          .attr("width", itemsize*1.5).attr("height",itemsize*1.5).attr("fill",colortlc[k]);
+      labeltext.append("text").attr("x",x0+itemsize*1.5+labeltlc[k].length/2*itemsize/2 ).attr("y",y0+itemsize)
+          .attr("font-family","sans-serif").attr("font-size",fsize).attr("font-weight","bold")
+          .attr("fill","black")
+          .text(labeltlc[k]);
    }
 
    for(var j=0;j < slcn;j++){
